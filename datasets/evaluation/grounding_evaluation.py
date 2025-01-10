@@ -52,6 +52,7 @@ class GroundingEvaluator(DatasetEvaluator):
     def process(self, inputs, outputs):
         for input, output in zip(inputs, outputs):
             pred = output['grounding_mask'].sigmoid() > 0.5
+            # pred = output.sigmoid() > 0.5
             gt = input['groundings']['masks'].bool()
             bsi = len(pred)
             I, U = self.computeIoU(pred, gt)

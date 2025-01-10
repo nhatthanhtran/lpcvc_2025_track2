@@ -138,9 +138,9 @@ class LanguageEncoder(nn.Module):
         else:
             tokens = txts
         token_emb, class_emb = self.forward_language_token((tokens['input_ids'], tokens['attention_mask']), norm=norm)
-        ret = {"tokens": tokens,
-                "token_emb": token_emb,
-                "class_emb": class_emb,}
+        ret = {"tokens": tokens, # tokens['input_ids'].shape: torch.Size([1, 77]); tokens['attention_mask'].shape: torch.Size([1, 77])
+                "token_emb": token_emb, # torch.Size([1, 77, 512])
+                "class_emb": class_emb,} # torch.Size([1, 512])
         setattr(self, '{}_token_embeddings'.format(name), ret)
         return ret
 

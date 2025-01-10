@@ -8,8 +8,9 @@ from timm.models.layers import trunc_normal_
 from detectron2.layers import Conv2d
 import fvcore.nn.weight_init as weight_init
 
-from ..utils import MultiheadAttention
+# from ..utils import MultiheadAttention
 
+from torch.nn import MultiheadAttention
 
 class SelfAttentionLayer(nn.Module):
 

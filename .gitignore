@@ -107,3 +107,8 @@ amlt/*
 *venv/*
 *.pt
 *.pth
+
+data/*
+*.bin
+*.onnx
+*.txt

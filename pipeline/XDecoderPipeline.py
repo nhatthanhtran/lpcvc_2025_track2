@@ -137,7 +137,6 @@ class XDecoderPipeline:
                 total_compute_time = 0
                 total_eval_time = 0
                 start_data_time = time.perf_counter()
-                
                 for idx, batch in enumerate(eval_batch_gen):
                     total_data_time += time.perf_counter() - start_data_time
                     if idx == num_warmup:

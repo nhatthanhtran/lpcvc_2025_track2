@@ -13,6 +13,10 @@ import wandb
 
 from utils.arguments import load_opt_command
 
+# import debugpy
+# debugpy.listen(5678)
+# debugpy.wait_for_client()
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

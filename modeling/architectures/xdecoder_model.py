@@ -284,6 +284,7 @@ class GeneralizedXdecoder(nn.Module):
         if self.training:
             losses = {}
             if self.task_switch['mask']:
+                #Enter here
                 losses_seg = self.forward_seg(batched_inputs['coco'])
                 losses.update(losses_seg)
             if self.task_switch['retrieval'] or self.task_switch['captioning']:
@@ -303,6 +304,7 @@ class GeneralizedXdecoder(nn.Module):
             elif mode == 'classification':
                 return self.evaluate_classification(batched_inputs)
             elif mode == 'grounding_refcoco':
+                #Enter here
                 return self.evaluate_grounding(batched_inputs, mode)
             else:
                 return self.evaluate(batched_inputs)
@@ -431,14 +433,21 @@ class GeneralizedXdecoder(nn.Module):
         caption_pred_results = outputs["pred_captions"] if self.task_switch['caption'] else [None for i in range(len(mask_pred_results))]
 
         # upsample masks
+        # mask_pred_results = F.interpolate(
+        #     mask_pred_results,
+        #     size=(images.tensor.shape[-2], images.tensor.shape[-1]),
+        #     mode="bicubic",
+        #     align_corners=False,
+        #     antialias=True
+        # )
         mask_pred_results = F.interpolate(
             mask_pred_results,
             size=(images.tensor.shape[-2], images.tensor.shape[-1]),
-            mode="bicubic",
+            mode="bilinear",
             align_corners=False,
-            antialias=True
+            antialias=False
         )
-
+        
         input_size = mask_pred_results.shape[-2:]
         keep_sem_bgd = self.metadata.keep_sem_bgd if hasattr(self.metadata, 'keep_sem_bgd') else False
         del outputs
@@ -583,14 +592,20 @@ class GeneralizedXdecoder(nn.Module):
         caption_pred_results = outputs["pred_captions"] if self.task_switch['caption'] else [None for i in range(len(mask_pred_results))]
 
         # upsample masks
+        # mask_pred_results = F.interpolate(
+        #     mask_pred_results,
+        #     size=(images.tensor.shape[-2], images.tensor.shape[-1]),
+        #     mode="bicubic",
+        #     align_corners=False,
+        #     antialias=True
+        # )
         mask_pred_results = F.interpolate(
             mask_pred_results,
             size=(images.tensor.shape[-2], images.tensor.shape[-1]),
-            mode="bicubic",
+            mode="bilinear",
             align_corners=False,
-            antialias=True
+            antialias=False
         )
-
         processed_results = []
         for mask_pred_result, caption_pred_result, input_per_image, image_size in zip(
             mask_pred_results, caption_pred_results, batched_inputs, images.image_sizes
@@ -663,10 +678,11 @@ class GeneralizedXdecoder(nn.Module):
             grd_texts = [x[0] for x in grd_texts]
 
             gtext = self.sem_seg_head.predictor.lang_encoder.get_text_token_embeddings(grd_texts, name='grounding', token=False, norm=False)
-            token_emb = gtext['token_emb']
-            tokens = gtext['tokens']
-            query_emb = token_emb[tokens['attention_mask'].bool()]
-            extra['grounding_tokens'] = query_emb[:,None]
+            # token_emb = gtext['token_emb'] # torch.Size([1, 77, 512])
+            # tokens = gtext['tokens']
+            # query_emb = token_emb[tokens['attention_mask'].bool()]
+            # extra['grounding_tokens'] = query_emb[:,None] # torch.Size([K, 1, 512])
+            extra['grounding_tokens'] = gtext['class_emb'].unsqueeze(1) # torch.Size([1, 1, 512])
 
             features = self.backbone(images.tensor)
             outputs = self.sem_seg_head(features, extra=extra, task='grounding_eval')
@@ -682,17 +698,18 @@ class GeneralizedXdecoder(nn.Module):
             out_prob = vl_similarity(v_emb, t_emb, temperature=temperature)
             
             matched_id = out_prob.max(0)[1]
-            mask_pred_results += [pred_gmasks[matched_id,:,:]]
+            mask_pred_results += [pred_gmasks[matched_id,:,:]] #list: torch.Size([1, 128, 160])
 
         for i in range(len(mask_pred_results)):
             # upsample masks
-            mask_pred_results[i] = F.interpolate(
-                mask_pred_results[i][None,],
-                size=(images.tensor.shape[-2], images.tensor.shape[-1]),
-                mode="bicubic",
-                align_corners=False,
-                antialias=True
-            )[0]
+            mask_pred_results[i] = F.interpolate(mask_pred_results[i][None,], size=(images.tensor.shape[-2], images.tensor.shape[-1]), mode="bilinear", align_corners=False, antialias=False)
+            # mask_pred_results[i] = F.interpolate(
+            #     mask_pred_results[i][None,],
+            #     size=(images.tensor.shape[-2], images.tensor.shape[-1]),
+            #     mode="bicubic",
+            #     align_corners=False,
+            #     antialias=True
+            # )[0] #list: torch.Size([1, 512, 640])
 
         processed_results = []
         for mask_pred_result, input_per_image, image_size in zip(
@@ -711,7 +728,6 @@ class GeneralizedXdecoder(nn.Module):
             # bbox = BitMasks(mask_pred_result > 0).get_bounding_boxes()
             # bbox = BoxMode.convert(bbox.tensor, BoxMode.XYXY_ABS, BoxMode.XYWH_ABS)
             # processed_results[-1]['grounding_box'] = bbox
-
         return processed_results
 
     def prepare_vlp_targets(self, batched_inputs, device):
