@@ -1,3 +1,7 @@
+Trained weights for LPCVC25_Track2: [https://drive.google.com/file/d/1zTaVW_I4fe6MSBq5GAg284TuQfLcB0Yd/view?usp=drive_link](https://drive.google.com/file/d/1zTaVW_I4fe6MSBq5GAg284TuQfLcB0Yd/view?usp=drive_link)
+
+
+
 # X-Decoder: Generalized Decoding for Pixel, Image, and Language
 
 \[[Project Page](https://x-decoder-vl.github.io/)\]   \[[Paper](https://arxiv.org/pdf/2212.11270.pdf)\]    \[[HuggingFace All-in-One Demo](https://huggingface.co/spaces/xdecoder/Demo)\] \[[HuggingFace Instruct Demo](https://huggingface.co/spaces/xdecoder/Instruct-X-Decoder)\]  \[[Video](https://youtu.be/nZZTkYM0kd0)\]
