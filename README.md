@@ -60,7 +60,7 @@
         U = (pred_seg | gd_seg)
         return I, U
     # compute mIoU over all test image-text pairs
-    pred = output['grounding_mask'].sigmoid() > 0.5
+    pred = output['grounding_mask'] # binary mask values after threshold .sigmoid() > 0.5
     gt = input['groundings']['masks'].bool()
     bsi = len(pred)
     I, U = self.computeIoU(pred, gt)
