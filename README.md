@@ -13,7 +13,7 @@
 - Task: Grounding Segmentation
 - Finetuned model weights for LPCVC Track2:
   - Training: `sh command.sh`
-  - Init weights: [[Google Drive]](https://drive.google.com/file/d/1zTaVW_I4fe6MSBq5GAg284TuQfLcB0Yd/view?usp=drive_link)
+  - Init weights: [[Google Drive]](https://drive.google.com/file/d/1pk1HVDvQuGEyGwB4fP6y35mLWqY5xqOq/view?usp=drive_link)
 - :bulb: Hints:
   - Higher resolution of input image usually increase the segmentation accuracy, but also invovle more computational cost. There is always a trade-off.
 
