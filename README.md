@@ -43,7 +43,7 @@
 ```
 
 ### 3. Inference and Evaluation
-- :point_right: ***\* Please check the scripts [[.evaluate_model.py]](.evaluate_model.py) more details of inference the on AIHub***
+- :point_right: ***\* Please check the scripts [[evaluate_model.py]](evaluate_model.py) more details of inference the on AIHub***
 - **Device**: Snapdragon X Elite CRD
 - **Test Details**: During inference and evaluate all submitted solutions on AIHub, we prepare all input data and ground-truth to the same format and size to make it fair to all participants. Specifically,
   - *Input*: 
