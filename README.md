@@ -6,7 +6,7 @@
 - [2024.12.10] LPCVC 2025 is announced on NeurIPS 2024
 
 ### 1. Model Training and Evaluation
-:point_right: ***\*Please refer to [[XDecoder]]() for more details about model training and evaluation.***
+:point_right: ***\*Please refer to [[XDecoder]](https://github.com/microsoft/X-Decoder) for more details about model training and evaluation.***
 - Architecture: Focal-T / ViT-b
 - Training data: COCO
 - Evaluation data: RefCOCOg
@@ -18,7 +18,7 @@
   - Higher resolution of input image usually increase the segmentation accuracy, but also invovle more computational cost. There is always a trade-off.
 
 ### 2. Compiling and Profiling on Qualcomm Chips via AI Hub
-:point_right: ***\* Please refer to [[AI Hub]]() documents for more details regarding model compiling, profiling, and inference.***
+:point_right: ***\* Please refer to [[AI Hub]](https://app.aihub.qualcomm.com/docs/) documents for more details regarding model compiling, profiling, and inference.***
 
 ```python
     # Compile model on a specific device
@@ -43,7 +43,7 @@
 ```
 
 ### 3. Inference and Evaluation
-- :point_right: ***\* Please check the scripts [[.evaluate_model.py]]() more details of inference the on AIHub***
+- :point_right: ***\* Please check the scripts [[.evaluate_model.py]](.evaluate_model.py) more details of inference the on AIHub***
 - **Device**: Snapdragon X Elite CRD
 - **Test Details**: During inference and evaluate all submitted solutions on AIHub, we prepare all input data and ground-truth to the same format and size to make it fair to all participants. Specifically,
   - *Input*: 
@@ -59,13 +59,14 @@
         I = (pred_seg & gd_seg)
         U = (pred_seg | gd_seg)
         return I, U
+
     # compute mIoU over all test image-text pairs
-    pred = output['grounding_mask'] # binary mask values after threshold .sigmoid() > 0.5
+    pred = output['grounding_mask'] # binary mask values after threshold prediction.sigmoid() > 0.5
     gt = input['groundings']['masks'].bool()
-    bsi = len(pred)
+    batch_size = len(pred)
     I, U = self.computeIoU(pred, gt)
     IoU = I.reshape(bsi,-1).sum(-1)*1.0 / (U.reshape(bsi,-1).sum(-1) + 1e-6)
-    self.mIoU += IoU.sum().cpu()
+    mIoU = IoU.sum().cpu() / batch_size * 100
     ```
 - **Test Data Format**:
   Every image and a text description will be input to the model after the following preparation operations to make the input format fixed. The corresponding mask of the text description is the ground-truth. 
@@ -94,10 +95,28 @@
     text_emb = tokens['input_ids'].cuda() # shape=1x77
     text_attn_mask = tokens['attention_mask'].cuda() # shape=1x77
     input_text = [text_emb, text_attn_mask]
+
+    '''
+      input text = 'dog.'
+      tokenized output = {
+          'input_ids': tensor([[49406,  2308,  1774, 15762,   269, 49407, 49407, 49407, 49407, 49407,
+               49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
+               49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
+               49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
+               49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
+               49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
+               49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
+               49407, 49407, 49407, 49407, 49407, 49407, 49407]], device='cuda:0',
+             dtype=torch.int32),
+          'attention_mask': tensor([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0]], device='cuda:0', dtype=torch.int32)}
+    '''
     ```
 
 ## Acknowledgement
-* The baseline is built on top of [XDecoder]()
+* The baseline is built on top of [XDecoder](https://github.com/microsoft/X-Decoder)
 
 ## Contact
 LPCVC 2025 Organizers: [[Homepage]](lpcv.ai) [[slack]](https://aihub.qualcomm.com/community/slack) [[Email]](lowpowervision@gmail.com)
