@@ -137,7 +137,7 @@ if __name__ == "__main__":
     img_path = ''
     text = 'person'
     cfg_path = ['configs/xdecoder/focalt_unicl_lang_lpcvc25.yaml']
-    pretrained_path = 'data/output/test/focalt_unicl_lang_finetune.yaml_conf~/run_1/00197015/default/model_state_dict.pt'
+    pretrained_path = 'model_state_dict.pt'
 
     # image, text_emb, text_attn_mask = data_preprocess(img_path, text)
     cfg = load_opt_from_config_files(cfg_path)
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     compile_job = qai_hub.submit_compile_job(
         model=f"./xdecoder_lpcvc25.onnx",
         name="xdecoder_ovss",
-        device=qai_hub.Device("Samsung Galaxy S24 (Family)"),
+        device=qai_hub.Device("Snapdragon X Elite CRD"),
         options="--truncate_64bit_io --target_runtime qnn_context_binary",
     )
     compiled_model = compile_job.get_target_model().download(f"./xdecoder_lpcvc25.bin")
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     # """Submit an inference job for the model."""
     inference_job = qai_hub.submit_inference_job(
         model=compiled_model,
-        device=qai_hub.Device("Samsung Galaxy S24 (Family)"),
+        device=qai_hub.Device("Snapdragon X Elite CRD"),
         inputs=input_array,
         options="--max_profiler_iterations 1"
     )
