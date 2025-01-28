@@ -110,7 +110,7 @@ class XDecoder(torch.nn.Module):
 
         return mask_pred_results
 
-    def forward(self, image, text_emb, text_attn_mask):
+    def forward(self, image, text_input):
         # Image: resize 1024 -> 256, normalization
         # Text_emb: 1x77, text_attn_mask: 1x77
         image = F.interpolate(image, size=256, mode="bilinear", align_corners=False, antialias=False)
@@ -120,6 +120,8 @@ class XDecoder(torch.nn.Module):
 
         visual_features = self.backbone(img)
         tokens = {}
+        text_emb = text_input[0]
+        text_attn_mask = text_input[1]
         tokens['input_ids'] = text_emb
         tokens['attention_mask'] = text_attn_mask
         extra = {}
@@ -149,8 +151,10 @@ if __name__ == "__main__":
     img_tensor = torch.randn(1, 3, 1024, 1024).cuda()
     text_tensor = torch.randint(low=0, high=1000, size=(1, 77), dtype=torch.int64).cuda()
     txtmask_tensor = torch.randint(low=0, high=2, size=(1, 77), dtype=torch.int64).cuda()
+    text_input = torch.cat([text_tensor, txtmask_tensor], dim = 0)
 
-    example_input = (img_tensor, text_tensor, txtmask_tensor)
+    example_input = (img_tensor, text_input)
+    # example_input = (img_tensor, text_tensor, txtmask_tensor)
     # output = model(*example_input)
 
     with torch.no_grad():
