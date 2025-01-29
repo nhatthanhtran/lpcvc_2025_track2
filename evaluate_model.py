@@ -166,7 +166,7 @@ if __name__ == "__main__":
         model=f"./xdecoder_lpcvc25.onnx",
         name="xdecoder_ovss",
         device=qai_hub.Device("Snapdragon X Elite CRD"),
-        options="--truncate_64bit_io --target_runtime qnn_context_binary",
+        # by default, model is compiled to TFLite, and no device limits
     )
     compiled_model = compile_job.get_target_model().download(f"./xdecoder_lpcvc25.bin")
 
