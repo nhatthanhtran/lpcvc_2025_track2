@@ -25,8 +25,7 @@
     compile_job = qai_hub.submit_compile_job(
         model=f"./xdecoder_lpcvc25.onnx",
         name="xdecoder_ovss",
-        device=qai_hub.Device("Snapdragon X Elite CRD"),
-        options="--truncate_64bit_io --target_runtime qnn_context_binary",
+        device=qai_hub.Device("Snapdragon X Elite CRD")
     )
     compiled_model = compile_job.get_target_model().download(f"./xdecoder_lpcvc25.bin")
 
@@ -48,8 +47,7 @@
 - **Test Details**: During inference and evaluate all submitted solutions on AIHub, we prepare all input data and ground-truth to the same format and size to make it fair to all participants. Specifically,
   - *Input*: 
     - ***Image***: RGB, shape=3x1024x1024 # resize the longest edge to 1024, then padded to 1024x1024 square
-    - ***Text_emb***: , shape=1x77 # output of openai-clip tokenizer
-    - ***text_attn_mask***: shape=1x77 # output of tokenizer, binary values
+    - ***Text***: ***[Text_emb; text_attn_mask]***: , shape=2x77 # output of openai-clip tokenizer; The first row (1x77) is the text tokenized embedding, the second row (2x77) is the binary attention mask indicating valid text tokens.
   - *Output*: 
     - Mask prediction: binary matrix, shape=1x1024x1024 # used to calculate the IoU with ground-truth mask
 - **Evaluation Metric**
@@ -94,7 +92,8 @@
     tokens = tokenizer(text, padding='max_length', truncation=True, max_length=77, return_tensors='pt')
     text_emb = tokens['input_ids'].cuda() # shape=1x77
     text_attn_mask = tokens['attention_mask'].cuda() # shape=1x77
-    input_text = [text_emb, text_attn_mask]
+    input_text = torch.stack([text_emb; text_attn_mask], dim=0)
+    # ! NOTE: ONNX and TFLite/QNN on AIHub only take `numpy.array` type input, so when inference on AIHub, convert `torch.tensor` to `numpy.array`.
 
     '''
       input text = 'dog.'
