@@ -8,12 +8,9 @@ from detectron2.utils.memory import retry_if_cuda_oom
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
 from detectron2.structures import ImageList
-from detectron2.data import MetadataCatalog
-from detectron2.utils.colormap import random_color
 
 from utils.arguments import load_opt_from_config_files
 from utils.model import align_and_update_state_dicts
-from utils.visualizer import Visualizer
 from modeling.modules import sem_seg_postprocess
 from modeling.BaseModel import BaseModel
 from modeling import build_model
@@ -24,9 +21,6 @@ from modeling.language import build_language_encoder
 from modeling.language.loss import vl_similarity
 import qai_hub
 
-import debugpy
-debugpy.listen(5678)
-debugpy.wait_for_client()
 
 def data_preprocess(img_path, text, max_token_num = 77):
     # Image original size -> resize_max_leng=1024 & padding to 1024x1024
@@ -163,8 +157,8 @@ if __name__ == "__main__":
     text_input = torch.cat([text_tensor, txtmask_tensor], dim = 0)
 
     example_input = (img_tensor, text_input)
-    # output = model.forward(image, text_input).cpu().numpy()
-    # output = model.forward(*example_input).cpu().numpy()
+    # output = model(image, text_input).cpu().numpy()
+    # output = model(*example_input).cpu().numpy()
 
     with torch.no_grad():
         model.eval()
@@ -179,14 +173,12 @@ if __name__ == "__main__":
         # options="--truncate_64bit_io --target_runtime qnn_context_binary",
     )
 
-    compile_job.modify_sharing(add_emails=['lowpowervision@gmail.com'])
-
     compiled_model = compile_job.get_target_model().download(f"./xdecoder_lpcvc25.bin")
 
     image, text_emb, text_attn_mask = data_preprocess(img_path, text)
     input_array = (image, text_emb, text_attn_mask)
 
-    # Submit an inference job for the model
+    # """Submit an inference job for the model."""
     inference_job = qai_hub.submit_inference_job(
         model=compiled_model,
         device=qai_hub.Device("Snapdragon X Elite CRD"),
