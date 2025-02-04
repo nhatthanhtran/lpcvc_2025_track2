@@ -142,8 +142,8 @@ if __name__ == "__main__":
     pretrained_path = 'lpcvc_track2_models/model_state_dict.pt'
 
     # single image inference
-    # image, text_emb, text_attn_mask = data_preprocess(img_path, text)
-    # text_input = torch.cat([text_emb.unsqueeze(0), text_attn_mask.unsqueeze(0)], dim = 0)
+    img_tensor, text_emb, text_attn_mask = data_preprocess(img_path, text)
+    text_input = torch.cat([text_emb.unsqueeze(0), text_attn_mask.unsqueeze(0)], dim = 0)
 
     cfg = load_opt_from_config_files(cfg_path)
 
@@ -151,10 +151,10 @@ if __name__ == "__main__":
     model = XDecoder(cfg, pretrained_path , [text])
 
     # Model example input
-    img_tensor = torch.randn(1, 3, 1024, 1024).cuda()
-    text_tensor = torch.randint(low=0, high=1000, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
-    txtmask_tensor = torch.randint(low=0, high=2, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
-    text_input = torch.cat([text_tensor, txtmask_tensor], dim = 0)
+    # img_tensor = torch.randn(1, 3, 1024, 1024).cuda()
+    # text_tensor = torch.randint(low=0, high=1000, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
+    # txtmask_tensor = torch.randint(low=0, high=2, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
+    # text_input = torch.cat([text_tensor, txtmask_tensor], dim = 0)
 
     example_input = (img_tensor, text_input)
     # output = model(image, text_input).cpu().numpy()
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     image, text_emb, text_attn_mask = data_preprocess(img_path, text)
     input_array = (image, text_emb, text_attn_mask)
 
-    # """Submit an inference job for the model."""
+    # Submit an inference job for the model
     inference_job = qai_hub.submit_inference_job(
         model=compiled_model,
         device=qai_hub.Device("Snapdragon X Elite CRD"),
