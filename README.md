@@ -15,7 +15,7 @@
   - Training: `sh command.sh`
   - Init weights: [[Google Drive]](https://drive.google.com/file/d/1pk1HVDvQuGEyGwB4fP6y35mLWqY5xqOq/view?usp=drive_link)
 - :bulb: Hints:
-  - Higher resolution of input image usually increase the segmentation accuracy, but also invovle more computational cost. There is always a trade-off.
+  - Higher resolution of input image usually increases the segmentation accuracy, but also involves more computational cost. There is always a trade-off.
 
 ### 2. Compiling and Profiling on Qualcomm Chips via AI Hub
 :point_right: ***\* Please refer to [[AI Hub]](https://app.aihub.qualcomm.com/docs/) documents for more details regarding model compiling, profiling, and inference.***
@@ -30,7 +30,8 @@
     compiled_model = compile_job.get_target_model().download(f"./xdecoder_lpcvc25.bin")
 
     image, text_emb, text_attn_mask = prepare_data(img_path, text)
-    input_array = (image, text_emb, text_attn_mask)
+    text_input = torch.cat([text_emb.unsqueeze(0), text_attn_mask.unsqueeze(0)], dim = 0)
+    input_array = (image, text_input)
 
     # Submit an inference job for the model.
     inference_job = qai_hub.submit_inference_job(
@@ -47,7 +48,7 @@
 - **Test Details**: During inference and evaluate all submitted solutions on AIHub, we prepare all input data and ground-truth to the same format and size to make it fair to all participants. Specifically,
   - *Input*: 
     - ***Image***: RGB, shape=3x1024x1024 # resize the longest edge to 1024, then padded to 1024x1024 square
-    - ***Text***: ***[Text_emb; text_attn_mask]***: , shape=2x77 # output of openai-clip tokenizer; The first row (1x77) is the text tokenized embedding, the second row (2x77) is the binary attention mask indicating valid text tokens.
+    - ***Text***: ***[text_emb; text_attn_mask]***: Tensor, shape=2x1x77 # output of openai-clip tokenizer; The first row (1x77) is the text tokenized embedding, the second row (1x77) is the binary attention mask indicating valid text tokens.
   - *Output*: 
     - Mask prediction: binary matrix, shape=1x1024x1024 # used to calculate the IoU with ground-truth mask
 - **Evaluation Metric**
@@ -79,7 +80,7 @@
     pad_image = torch.as_tensor(numpy.ascontiguousarray(pad_image.transpose(2, 0, 1))).cuda()
     input_iamge = torch.unsqueeze(pad_image, 0) # shape=1x3x1024x1024
     ```
-  - **Text Input**: Each annotated mask is assigned 3~5 text descriptions. The textual descriptions include keywords, short phrases, long sentences describing the appearance, location, spatial relationships, or semantic knowledge of the target objects/stuff. (*Text tokenization*) QNN library does not support tokneization of text input yet. In order to reduce the influence of different text tokenzer used to the final performance, accuracy and latency, we pre-fixed the text tokenzier and only input the tokenized vector of the input text to the model as below:
+  - **Text Input**: Each annotated mask is assigned 3~5 text descriptions. The textual descriptions include keywords, short phrases, long sentences describing the appearance, location, spatial relationships, or semantic knowledge of the target objects/stuff. (*Text tokenization*) QNN library does not support tokenization of text input yet. In order to reduce the influence of different text tokenizer used to the final performance, accuracy and latency, we pre-fixed the text tokenizer and only input the tokenized vector of the input text to the model as below:
     ```python
     # prefixed text tokenizer
     from transformers import CLIPTokenizer
