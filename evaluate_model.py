@@ -8,9 +8,12 @@ from detectron2.utils.memory import retry_if_cuda_oom
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
 from detectron2.structures import ImageList
+from detectron2.data import MetadataCatalog
+from detectron2.utils.colormap import random_color
 
 from utils.arguments import load_opt_from_config_files
 from utils.model import align_and_update_state_dicts
+from utils.visualizer import Visualizer
 from modeling.modules import sem_seg_postprocess
 from modeling.BaseModel import BaseModel
 from modeling import build_model
@@ -21,9 +24,9 @@ from modeling.language import build_language_encoder
 from modeling.language.loss import vl_similarity
 import qai_hub
 
-# import debugpy
-# debugpy.listen(5678)
-# debugpy.wait_for_client()
+import debugpy
+debugpy.listen(5678)
+debugpy.wait_for_client()
 
 def data_preprocess(img_path, text, max_token_num = 77):
     # Image original size -> resize_max_leng=1024 & padding to 1024x1024
@@ -51,7 +54,7 @@ def data_preprocess(img_path, text, max_token_num = 77):
 
 # Pretrained X-Decoder model
 class XDecoder(torch.nn.Module):
-    def __init__(self, cfg, pretrained_path):
+    def __init__(self, cfg, pretrained_path, stuff_classes):
         super(XDecoder, self).__init__()
         # Prepare config file and build model
         # Switcher for task {'bbox': False, 'mask': True, 'caption': True, 'captioning': False, 'retrieval': False, 'grounding': True}
@@ -68,7 +71,10 @@ class XDecoder(torch.nn.Module):
         self.backbone = build_backbone(self.cfg).cuda()
         self.lang_encoder = build_language_encoder(self.cfg).cuda()        
         self.sem_seg_head = build_xdecoder_head(self.cfg, self.backbone.output_shape(), self.lang_encoder, extra).cuda()
-        self.sem_seg_head.predictor.lang_encoder.get_text_embeddings(['background'], is_eval=True)
+
+        # self.sem_seg_head.predictor.lang_encoder.get_text_embeddings(["background"], is_eval=True)
+        self.sem_seg_head.predictor.lang_encoder.get_text_embeddings(stuff_classes + ["background"], is_eval=True)
+        self.sem_seg_head.num_classes = len(stuff_classes)
 
         # Load pretrained weights
         checkpoint = torch.load(pretrained_path)
@@ -112,11 +118,10 @@ class XDecoder(torch.nn.Module):
 
     def forward(self, image, text_input):
         # Image: resize 1024 -> 256, normalization
-        # Text_emb: 1x77, text_attn_mask: 1x77
-        image = F.interpolate(image, size=256, mode="bilinear", align_corners=False, antialias=False)
-
+        # text_input: 2x1x77, containing input_ids: 1x77 and text_attn_mask: 1x77
         img = (image - self.pixel_mean) / self.pixel_std
         # img = ImageList.from_tensors([img], self.size_divisibility)
+        image = F.interpolate(img, size=256, mode="bilinear", align_corners=False, antialias=False)
 
         visual_features = self.backbone(img)
         tokens = {}
@@ -131,35 +136,39 @@ class XDecoder(torch.nn.Module):
         outputs = self.sem_seg_head(visual_features, extra=extra, task='grounding_eval')
 
         pred_mask = self.postprocess(outputs, txt_embedding['class_emb'])
+        output_mask = (pred_mask[0] > 0).float()
 
-        return pred_mask
+        return output_mask
 
 
 if __name__ == "__main__":
-    img_path = ''
-    text = 'person'
+    img_path = 'dog.jpg'
+    text = 'dog'
     cfg_path = ['configs/xdecoder/focalt_unicl_lang_lpcvc25.yaml']
-    pretrained_path = 'model_state_dict.pt'
+    pretrained_path = 'lpcvc_track2_models/model_state_dict.pt'
 
+    # single image inference
     # image, text_emb, text_attn_mask = data_preprocess(img_path, text)
+    # text_input = torch.cat([text_emb.unsqueeze(0), text_attn_mask.unsqueeze(0)], dim = 0)
+
     cfg = load_opt_from_config_files(cfg_path)
 
     # Create the model
-    model = XDecoder(cfg, pretrained_path)
+    model = XDecoder(cfg, pretrained_path , [text])
 
     # Model example input
     img_tensor = torch.randn(1, 3, 1024, 1024).cuda()
-    text_tensor = torch.randint(low=0, high=1000, size=(1, 77), dtype=torch.int64).cuda()
-    txtmask_tensor = torch.randint(low=0, high=2, size=(1, 77), dtype=torch.int64).cuda()
+    text_tensor = torch.randint(low=0, high=1000, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
+    txtmask_tensor = torch.randint(low=0, high=2, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
     text_input = torch.cat([text_tensor, txtmask_tensor], dim = 0)
 
     example_input = (img_tensor, text_input)
-    # example_input = (img_tensor, text_tensor, txtmask_tensor)
-    # output = model(*example_input)
+    # output = model.forward(image, text_input).cpu().numpy()
+    # output = model.forward(*example_input).cpu().numpy()
 
     with torch.no_grad():
         model.eval()
-        torch.onnx.export(model, example_input, f"./xdecoder_lpcvc25.onnx", input_names=["image", "text_emb", "text_attn_mask"], output_names=["output"])
+        torch.onnx.export(model, example_input, f"./xdecoder_lpcvc25.onnx", input_names=["img_tensor", "text_input"], output_names=["output"])
 
     # Compile model on a specific device
     compile_job = qai_hub.submit_compile_job(
@@ -167,13 +176,17 @@ if __name__ == "__main__":
         name="xdecoder_ovss",
         device=qai_hub.Device("Snapdragon X Elite CRD"),
         # by default, model is compiled to TFLite, and no device limits
+        # options="--truncate_64bit_io --target_runtime qnn_context_binary",
     )
+
+    compile_job.modify_sharing(add_emails=['lowpowervision@gmail.com'])
+
     compiled_model = compile_job.get_target_model().download(f"./xdecoder_lpcvc25.bin")
 
     image, text_emb, text_attn_mask = data_preprocess(img_path, text)
     input_array = (image, text_emb, text_attn_mask)
 
-    # """Submit an inference job for the model."""
+    # Submit an inference job for the model
     inference_job = qai_hub.submit_inference_job(
         model=compiled_model,
         device=qai_hub.Device("Snapdragon X Elite CRD"),
