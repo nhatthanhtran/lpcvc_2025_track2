@@ -93,7 +93,7 @@
     tokens = tokenizer(text, padding='max_length', truncation=True, max_length=77, return_tensors='pt')
     text_emb = tokens['input_ids'].cuda() # shape=1x77
     text_attn_mask = tokens['attention_mask'].cuda() # shape=1x77
-    input_text = torch.stack([text_emb; text_attn_mask], dim=0)
+    input_text = torch.stack([text_emb, text_attn_mask], dim=0) # shape=2x1x77
     # ! NOTE: ONNX and TFLite/QNN on AIHub only take `numpy.array` type input, so when inference on AIHub, convert `torch.tensor` to `numpy.array`.
 
     '''
