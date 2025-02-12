@@ -1,7 +1,7 @@
 # Baseline Solution - Track 2: Open-Vocabulary Segmentation with Text-Prompt (LPCVC 2025)
 
 ## :fire: News
-- [2025.02.01] Sample solution of Track2: OVSeg is released
+- [2025.02.01] Sample solution of Track2: X-Decoder is released
 - [2025.01.10] LPCVC 2025 is accepted as CVPR 2025 Workshop
 - [2024.12.10] LPCVC 2025 is announced on NeurIPS 2024
 
@@ -99,7 +99,7 @@
     '''
       input text = 'dog.'
       tokenized output = {
-          'input_ids': tensor([[49406,  2308,  1774, 15762,   269, 49407, 49407, 49407, 49407, 49407,
+          'input_ids': tensor([[49406, 1929, 269, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
                49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
                49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
                49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
@@ -108,7 +108,7 @@
                49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407, 49407,
                49407, 49407, 49407, 49407, 49407, 49407, 49407]], device='cuda:0',
              dtype=torch.int32),
-          'attention_mask': tensor([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          'attention_mask': tensor([[1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                0, 0, 0, 0, 0]], device='cuda:0', dtype=torch.int32)}
@@ -119,4 +119,4 @@
 * The baseline is built on top of [XDecoder](https://github.com/microsoft/X-Decoder)
 
 ## Contact
-LPCVC 2025 Organizers: [[Homepage]](lpcv.ai) [[slack]](https://aihub.qualcomm.com/community/slack) [[Email]](lowpowervision@gmail.com)
+LPCVC 2025 Organizers: [[Homepage](lpcv.ai)] [[slack](https://aihub.qualcomm.com/community/slack)] [[Email](lowpowervision@gmail.com)]
