@@ -119,4 +119,4 @@
 * The baseline is built on top of [XDecoder](https://github.com/microsoft/X-Decoder)
 
 ## Contact
-LPCVC 2025 Organizers: [[Homepage](lpcv.ai)] [[slack](https://aihub.qualcomm.com/community/slack)] [[Email](lowpowervision@gmail.com)]
+LPCVC 2025 Organizers: [[Homepage](https://lpcv.ai/)] [[slack](https://aihub.qualcomm.com/community/slack)] [[Email](mailto:lowpowervision@gmail.com)]
