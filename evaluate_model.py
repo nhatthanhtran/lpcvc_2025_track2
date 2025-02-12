@@ -2,6 +2,7 @@ import importlib
 import torch
 import os
 import numpy
+from typing import Tuple
 from torch.nn import functional as F
 from transformers import CLIPTokenizer
 from detectron2.utils.memory import retry_if_cuda_oom
@@ -20,7 +21,6 @@ from modeling.body import build_xdecoder_head
 from modeling.language import build_language_encoder
 from modeling.language.loss import vl_similarity
 import qai_hub
-
 
 def data_preprocess(img_path, text, max_token_num = 77):
     # Image original size -> resize_max_leng=1024 & padding to 1024x1024
@@ -134,55 +134,81 @@ class XDecoder(torch.nn.Module):
 
         return output_mask
 
+def compile_model(model):
+    # Model example input
+    img_tensor = torch.randn(1, 3, 1024, 1024).cuda()
+    text_tensor = torch.randint(low=0, high=1000, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
+    txtmask_tensor = torch.randint(low=0, high=2, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
+    text_input = torch.cat([text_tensor, txtmask_tensor], dim = 0)
+
+    example_input = (img_tensor, text_input)
+    with torch.no_grad():
+        model.eval()
+        torch.onnx.export(model, example_input, f"./xdecoder_lpcvc25.onnx", input_names=["img_tensor", "text_input"], output_names=["output"])
+    
+    # Compile model on a specific device
+    compile_job = qai_hub.submit_compile_job(
+        model=f"./xdecoder_lpcvc25.onnx",
+        name="xdecoder_ovss",
+        device=qai_hub.Device("Snapdragon X Elite CRD"),
+        # torch --> ONNX --> QNN
+        options="--truncate_64bit_io --target_runtime qnn_context_binary",
+    )
+
+    compile_job.modify_sharing(add_emails=['lowpowervision@gmail.com'])
+    compiled_model = compile_job.get_target_model().download(f"./xdecoder_lpcvc25.bin")
+
+    return compiled_model
+
+def local_inference(model, image, text_emb, text_attn_mask):
+    text_input = torch.cat([text_emb.unsqueeze(0), text_attn_mask.unsqueeze(0)], dim = 0)
+    model_output = model(image, text_input).cpu().numpy()
+    output = (model_output*255).astype('uint8')
+    print("Local Inference Completed: shape", output.shape)
+
+    return output
+
+def online_inference(model, image, text_emb, text_attn_mask):
+    text_input = numpy.stack([text_emb.type(torch.int32).detach().cpu().numpy(), text_attn_mask.type(torch.int32).detach().cpu().numpy()], axis=0)
+    input_data = {
+        "img_tensor": [image.detach().cpu().numpy().astype(numpy.float32)],  # Wrap in a list
+        "text_input": [text_input],  # Wrap in a list
+    }
+    job = qai_hub.get_job("j562ee0ng")
+    compiled_model = job.get_target_model()
+
+    inference_job = qai_hub.submit_inference_job(
+        model=compiled_model,
+        device=qai_hub.Device("Snapdragon X Elite CRD"),
+        inputs=input_data,
+    )
+
+    # Download and process the output data
+    output_array = inference_job.download_output_data()
+    output = (output_array['output_0'][0]*255).astype('uint8')
+    print("Local Inference Completed: shape", output.shape)
+
+    return output
 
 if __name__ == "__main__":
     img_path = 'dog.jpg'
-    text = 'dog'
+    text = 'dog.'
+    
     cfg_path = ['configs/xdecoder/focalt_unicl_lang_lpcvc25.yaml']
     pretrained_path = 'lpcvc_track2_models/model_state_dict.pt'
 
     # single image inference
-    img_tensor, text_emb, text_attn_mask = data_preprocess(img_path, text)
-    text_input = torch.cat([text_emb.unsqueeze(0), text_attn_mask.unsqueeze(0)], dim = 0)
+    image, text_emb, text_attn_mask = data_preprocess(img_path, text)
 
     cfg = load_opt_from_config_files(cfg_path)
 
     # Create the model
     model = XDecoder(cfg, pretrained_path , [text])
 
-    # Model example input
-    # img_tensor = torch.randn(1, 3, 1024, 1024).cuda()
-    # text_tensor = torch.randint(low=0, high=1000, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
-    # txtmask_tensor = torch.randint(low=0, high=2, size=(1, 77), dtype=torch.int64).cuda().unsqueeze(0)
-    # text_input = torch.cat([text_tensor, txtmask_tensor], dim = 0)
+    # compiled_model = compile_model(model)
 
-    example_input = (img_tensor, text_input)
-    # output = model(image, text_input).cpu().numpy()
-    # output = model(*example_input).cpu().numpy()
+    # Evaluate locally
+    output_local = local_inference(model, image, text_emb, text_attn_mask)
 
-    with torch.no_grad():
-        model.eval()
-        torch.onnx.export(model, example_input, f"./xdecoder_lpcvc25.onnx", input_names=["img_tensor", "text_input"], output_names=["output"])
-
-    # Compile model on a specific device
-    compile_job = qai_hub.submit_compile_job(
-        model=f"./xdecoder_lpcvc25.onnx",
-        name="xdecoder_ovss",
-        device=qai_hub.Device("Snapdragon X Elite CRD"),
-        # by default, model is compiled to TFLite, and no device limits
-        # options="--truncate_64bit_io --target_runtime qnn_context_binary",
-    )
-
-    compiled_model = compile_job.get_target_model().download(f"./xdecoder_lpcvc25.bin")
-
-    image, text_emb, text_attn_mask = data_preprocess(img_path, text)
-    input_array = (image, text_emb, text_attn_mask)
-
-    # Submit an inference job for the model
-    inference_job = qai_hub.submit_inference_job(
-        model=compiled_model,
-        device=qai_hub.Device("Snapdragon X Elite CRD"),
-        inputs=input_array,
-        options="--max_profiler_iterations 1"
-    )
-    output_array = inference_job.download_output_data()
+    # Evaluate via AI Hub
+    output_online = online_inference(model, image, text_emb, text_attn_mask)
