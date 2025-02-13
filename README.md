@@ -1,4 +1,4 @@
-# Baseline Solution - Track 2: Open-Vocabulary Segmentation with Text-Prompt (LPCVC 2025)
+# Sample Solution - Track 2: Open-Vocabulary Segmentation with Text-Prompt (LPCVC 2025)
 
 ## :fire: News
 - [2025.02.13] OpenCV Webinar by Professor Lu introducing LPCVC 2025
@@ -37,6 +37,8 @@ compile_job = hub.submit_compile_job(
     device=hub.Device(deploy_device),
     options="--target_runtime qnn_context_binary",
 )
+# IMPORTANT! You must share your compile job to lpcvc organizers thus we can pull and evalaute it.
+compile_job.modify_sharing(add_emails=['lowpowervision@gmail.com'])
 model = compile_job.get_target_model()
 
 # Profile model if requested
@@ -51,7 +53,7 @@ profile_job = hub.submit_profile_job(
 
 :point_right: ***See [[compile_profile_inference_aihub.py]](./compile_and_profile/compile_profile_inference_aihub.py) for complete inference and evaluation pipeline.***
 
-### :warning: Important Note
+#### :warning: Important Note
 During evaluation, only the following inference commands will be used. Ensure your submitted model is correctly compiled and produces valid outputs on AIHub:
 
 ```python

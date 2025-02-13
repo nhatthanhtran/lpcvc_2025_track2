@@ -166,6 +166,8 @@ def compile_and_profile_aihub(model_path="./compile_and_profile/onnx/model.onnx"
         options="--target_runtime qnn_context_binary",
     )
 
+    # IMPORTANT! You must share your compile job to lpcvc organizers thus we can pull and evalaute it.
+    compile_job.modify_sharing(add_emails=['lowpowervision@gmail.com'])
     model = compile_job.get_target_model()
     
     # Download compiled model if requested
