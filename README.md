@@ -18,6 +18,7 @@
     - (*download to* `./lpcvc_track2_models/model_state_dict.pt`)
 - :bulb: Hints:
   - Higher resolution of input image usually increases the segmentation accuracy, but also involves more computational cost. There is always a trade-off.
+  - Some complex operations or networkds are not well optimized/supported by QNN libraries yet. Thus you probably want to find alternative implementations for them. e.g., GroupNorm, DeformableAttention, etc. Refer to QNN for all well supported operations and networks.
 
 ### 2. Compiling and Profiling on Qualcomm Chips via AI Hub
 - Please refer to [[AI Hub]](https://app.aihub.qualcomm.com/docs/) documents for more general instructions regarding model compiling, profiling, and inference.
