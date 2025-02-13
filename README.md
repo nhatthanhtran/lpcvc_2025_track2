@@ -76,6 +76,16 @@ qnn_outputs = inference_job.download_output_data() # shape=[1024, 1024], numpy.a
 #### Device
 - Snapdragon X Elite CRD
 
+#### Test Dataset
+- 1000 images from ~200 categories
+- 3-5 annotated masks per image
+- Balanced across mask sizes and categories
+- 3-5 text descriptions per mask
+- Text descriptions include:
+  - Keywords
+  - Short phrases
+  - Detailed sentences (appearance, location, semantics, relationships, etc.)
+
 #### Input Format
 - **Image**:
   - RGB format, shape: 3x1024x1024
@@ -94,6 +104,8 @@ image = transform(img)
 image = torch.from_numpy(np.asanyarray(image)).float().permute(2, 0, 1)
 images = [image]
 image_input = ImageList.from_tensors(images, size_divisibility=1024).tensor
+
+# All the input images have the same input shape 3x1024x1024 with RGB values [0, 255]. The original images are first resized to make the longest edge equals 1024, then padded to square 1024x1024 by 0s.
 ```
 
 #### Text Processing
@@ -106,6 +118,8 @@ tokenizer = CLIPTokenizer.from_pretrained('openai/clip-vit-base-patch32')
 tokenizer.add_special_tokens({'cls_token': tokenizer.eos_token})
 tokens = tokenizer(text, padding='max_length', truncation=True, max_length=77, return_tensors='pt')
 text_input = torch.stack((tokens['input_ids'], tokens['attention_mask']))  # Shape: 2x1x77
+
+# (Text tokenization) QNN library does not support tokenization of text input yet. In order to reduce the influence of different text tokenizer used to the final performance, accuracy and latency, we pre-fixed the text tokenizer and only input the tokenized vector of the input text to the model
 ```
 
 #### Evaluation Metric
@@ -124,15 +138,7 @@ IoUs = [compute_IoU(p, g) for p, g in zip(pred, gt)]
 mIoU = sum(IoUs) / len(IoUs) * 100
 ```
 
-#### Test Dataset
-- 1000 images from ~200 categories
-- 3-5 annotated masks per image
-- Balanced across mask sizes and categories
-- 3-5 text descriptions per mask
-- Text descriptions include:
-  - Keywords
-  - Short phrases
-  - Detailed sentences (appearance, location, relationships)
+
 
 ## Acknowledgements
 * The sample solution for LPCVC 2025 Track-2 is built on [XDecoder](https://github.com/microsoft/X-Decoder)
