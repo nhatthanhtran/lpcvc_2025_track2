@@ -1,3 +1,8 @@
+"""
+Build and run inference with the XDecoder baseline model for semantic segmentation.
+This module handles model construction, weight loading, and inference pipeline.
+"""
+
 import os
 import sys
 from PIL import Image
@@ -21,6 +26,18 @@ from utils.arguments import load_opt_from_config_files
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def build_baseline_model(image_input, text_input, output_path="./compile_and_profile", test_torch_model_local=True):
+    """
+    Build the XDecoder baseline model and optionally run inference.
+    
+    Args:
+        image_input: Input image tensor (1, 3, 1024, 1024) with values in [0, 255]
+        text_input: Text embedding tensor (2, 1, 77) containing [text_emb, text_attn_mask]
+        output_path: Directory to save output visualizations
+        test_torch_model_local: Whether to run inference test after building
+    
+    Returns:
+        XDecoder model instance
+    """
     # load configs and pretrained weights
     conf_file = "./configs/xdecoder/focalt_unicl_lang_lpcvc25.yaml"
     opt = load_opt_from_config_files([conf_file])
@@ -72,12 +89,16 @@ def build_baseline_model(image_input, text_input, output_path="./compile_and_pro
 
 def inference_torch_local(model, image_input, text_input, output_path='./compile_and_profile'):
     """
-        Input:
-            model: torch model
-            image_input: torch.float32, shape=1x3x1024x1024, values in [0., 255.]
-            text_input: torch.int32, shape=2x1x77, [text_emb, text_attn_mask]
-        Output:
-            pred_mask: torch tensor, torch.bool (after post processing), shape=1024x1024
+    Run inference with the torch model and save visualization.
+    
+    Args:
+        model: XDecoder model instance
+        image_input: Input image tensor (1, 3, 1024, 1024) with values in [0, 255]
+        text_input: Text embedding tensor (2, 1, 77) containing [text_emb, text_attn_mask]
+        output_path: Directory to save output mask visualization
+        
+    Returns:
+        pred_mask: Binary prediction mask (1024, 1024)
     """
     os.makedirs(output_path, exist_ok=True)
 
@@ -92,7 +113,27 @@ def inference_torch_local(model, image_input, text_input, output_path='./compile
 
 
 class XDecoder(nn.Module):
+    """
+    XDecoder model for visual-language tasks including semantic segmentation.
+    
+    The model consists of:
+    - Vision backbone for feature extraction
+    - Multi-scale feature extractor
+    - Language encoder for text embedding
+    - Mask decoder for segmentation prediction
+    """
+    
     def __init__(self, opt, backbone, feature_extractor, lang_encoder, mask_decoder):
+        """
+        Initialize XDecoder model components.
+        
+        Args:
+            opt: Configuration options dictionary
+            backbone: Vision backbone network
+            feature_extractor: Multi-scale feature extractor
+            lang_encoder: Language encoder for text embeddings
+            mask_decoder: Decoder for mask prediction
+        """
         super().__init__()
         self.opt = opt
         self.backbone = backbone
@@ -108,6 +149,16 @@ class XDecoder(nn.Module):
         self.pixel_std = torch.tensor(self.opt['INPUT']['PIXEL_STD']).view(1, -1, 1, 1).repeat(1, 1, self.image_resolution, self.image_resolution).to(device)
 
     def pre_processing(self, image_input, text_input):
+        """
+        Preprocess inputs before model forward pass.
+        
+        Args:
+            image_input: Raw input image tensor
+            text_input: Raw input text tensor
+            
+        Returns:
+            Tuple of processed (images, tokens)
+        """
         # downsample image for faster inference
         down_sample_size = 256
         images = (image_input - self.pixel_mean) / self.pixel_std
@@ -117,13 +168,33 @@ class XDecoder(nn.Module):
         return images, tokens
     
     def vl_similarity(self, image_feat, text_feat, temperature=1):
+        """
+        Calculate visual-language similarity scores.
+        
+        Args:
+            image_feat: Image feature embeddings
+            text_feat: Text feature embeddings
+            temperature: Temperature parameter for scaling logits
+            
+        Returns:
+            Similarity logits between image and text features
+        """
         logits = torch.matmul(image_feat, text_feat.t())
         logits = temperature.exp().clamp(max=100) * logits
         return logits
 
     def post_processing(self, pred_gmasks, pred_gtexts, class_emb):
-
-
+        """
+        Post-process model outputs to generate final prediction mask.
+        
+        Args:
+            pred_gmasks: Predicted grounding masks
+            pred_gtexts: Predicted text embeddings
+            class_emb: Class embedding for matching
+            
+        Returns:
+            Final binary prediction mask
+        """
         pred_gmasks = pred_gmasks
         v_emb = pred_gtexts
         t_emb = class_emb
@@ -147,6 +218,16 @@ class XDecoder(nn.Module):
 
 
     def forward(self, image_input, text_input):
+        """
+        Forward pass of the XDecoder model.
+        
+        Args:
+            image_input: Input image tensor (1, 3, 1024, 1024)
+            text_input: Input text tensor (2, 1, 77)
+            
+        Returns:
+            Binary prediction mask (1024, 1024)
+        """
         images, tokens = self.pre_processing(image_input, text_input)
 
         visual_features = self.backbone(images) # return dict, {'res2', 'res3', 'res4', 'res5'}
