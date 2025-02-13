@@ -1,7 +1,7 @@
 # Baseline Solution - Track 2: Open-Vocabulary Segmentation with Text-Prompt (LPCVC 2025)
 
 ## :fire: News
-- [2025.02.13] OpenCV Talk by Professor Lu about LPCVC 2025
+- [2025.02.13] OpenCV Webinar by Professor Lu introducing LPCVC 2025
 - [2025.02.01] Sample solution of Track2: X-Decoder is released
 - [2025.01.10] LPCVC 2025 is accepted as CVPR 2025 Workshop
 - [2024.12.10] LPCVC 2025 is announced on NeurIPS 2024
@@ -20,9 +20,8 @@
   - Higher resolution of input image usually increases the segmentation accuracy, but also involves more computational cost. There is always a trade-off.
 
 ### 2. Compiling and Profiling on Qualcomm Chips via AI Hub
-:point_right: 
 - Please refer to [[AI Hub]](https://app.aihub.qualcomm.com/docs/) documents for more general instructions regarding model compiling, profiling, and inference.
-- ***\* For this sample solution and all LPCVC 2025 Track-2 participants, feel free to check the provided sample compile & profile & inference on AIHub and evaluation pipeline here [[compile_profile_inference_aibub.py]](./compile_and_profile/compile_profile_inference_aihub.py).***
+- :point_right: ***\* For this sample solution and all LPCVC 2025 Track-2 participants, feel free to check the provided sample compile & profile & inference on AIHub and evaluation pipeline here [[compile_profile_inference_aibub.py]](./compile_and_profile/compile_profile_inference_aihub.py).***
 
 ```python
     # Submit compilation job to AIHub
@@ -45,7 +44,7 @@
 
 ### 3. Inference and Evaluation
 - :point_right: ***\* Please check the scripts [[compile_profile_inference_aibub.py]](./compile_and_profile/compile_profile_inference_aihub.py) for more details of inference the on AIHub and our evaluation pipeline.***
-- :heavy_exclamation_mark: ***IMPORTANT***: In the evaluation stage, only the following commands will be used to inference the test data using the submitted model. It's the **participants responsibility** to confirm that your model is already correctly compiled and can inference and output correct results on AIHub following the required format.
+- :heavy_exclamation_mark: ***IMPORTANT***: In the evaluation stage, only the following commands will be used to inference the test data given the submitted model. It's the **participants responsibility** to confirm that your model is already correctly compiled and can inference and output correct results on AIHub following the required format.
 ```python
     # Prepare inputs for AIHub inference
     aihub_inputs = {
