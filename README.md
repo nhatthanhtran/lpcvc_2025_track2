@@ -13,6 +13,14 @@ To submit the model to Qualcomm AI Hub, run the following command
 python compile_and_profile_base_line/compile_profile_inference_aihub.py
 ```
 
+The overall ranking is 3rd place. The team consists of UCI students:
+Elisha Dayag, Jongwon Kim and Nhat Thanh Tran. 
+
+We finetuned the model on 8 A6000 GPUs that takes about 3 days. There are some other attempts
+to use other image backbones (VIT, DaViT), however incorporate them to the provided language backbone 
+create some difficulties. We would expect the ViT to perform much better the baseline image backbone.
+If one use ViT then input resolution of 224 may require to meet inference time.
+
 ## :fire: News
 - [2025.02.13] OpenCV Webinar by Professor Lu introducing LPCVC 2025
 - [2025.02.01] Sample solution of Track2: X-Decoder released
