@@ -33,7 +33,7 @@ sys.path.append('')
 # Model Definition Section
 """[Participants: Replace this section with your custom model implementation]"""
 
-from compile_and_profile_local.build_baseline_model import build_baseline_model
+from compile_and_profile_base_line.build_baseline_model import build_baseline_model
 
 def build_model(image_input, text_input, output_path="./compile_and_profile", test_torch_model_local=True):
     """Build and return the model for inference.
@@ -229,13 +229,13 @@ if __name__ == '__main__':
     # Example pipeline demonstrating complete workflow
     
     # Step 1: Prepare input data
-    image_path = "./demo/seem/examples/zebras2.jpg"
-    text = "the zebra on the right."
+    image_path = "./demo/seem/examples/corgi2.jpg"
+    text = "dog."
     image_input, text_input = prepare_data(image_path, text)
 
     # Step 2: Build model
     model = build_model(image_input, text_input)
-    # exit()
+
     # Step 3: Convert to ONNX format
     convert_torch_to_onnx_local(model, image_input, text_input, 
                               output_path="./compile_and_profile/onnx", 

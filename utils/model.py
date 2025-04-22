@@ -37,17 +37,34 @@ def align_and_update_state_dicts(model_state_dict, ckpt_state_dict):
     unloaded_log = []
     for model_key in model_keys:
         model_weight = model_state_dict[model_key]
+
+          # For debugging purposes, you can remove this line in production
         if model_key in ckpt_keys:
             ckpt_weight = ckpt_state_dict[model_key]
             if model_weight.shape == ckpt_weight.shape:
+                # If the shapes match, load the weights
                 result_dicts[model_key] = ckpt_weight
-                ckpt_keys.pop(ckpt_keys.index(model_key))
+                # ckpt_keys.pop(ckpt_keys.index(model_key))
                 matched_log.append("Loaded {}, Model Shape: {} <-> Ckpt Shape: {}".format(model_key, model_weight.shape, ckpt_weight.shape))
             else:
                 unmatched_log.append("*UNMATCHED* {}, Model Shape: {} <-> Ckpt Shape: {}".format(model_key, model_weight.shape, ckpt_weight.shape))
-        else:
+
+        else: 
             unloaded_log.append("*UNLOADED* {}, Model Shape: {}".format(model_key, model_weight.shape))
-            
+        
+        # if model_key in ckpt_keys:
+        #     ckpt_weight = ckpt_state_dict[model_key]
+        #     if model_weight.shape == ckpt_weight.shape:
+        #         result_dicts[model_key] = ckpt_weight
+        #         ckpt_keys.pop(ckpt_keys.index(model_key))
+        #         matched_log.append("Loaded {}, Model Shape: {} <-> Ckpt Shape: {}".format(model_key, model_weight.shape, ckpt_weight.shape))
+        #     else:
+        #         unmatched_log.append("*UNMATCHED* {}, Model Shape: {} <-> Ckpt Shape: {}".format(model_key, model_weight.shape, ckpt_weight.shape))
+        # else:
+        #     # pdb.set_trace()
+        #     unloaded_log.append("*UNLOADED* {}, Model Shape: {}".format(model_key, model_weight.shape))
+    import pdb
+    pdb.set_trace()        
     if is_main_process():
         for info in matched_log:
             logger.info(info)

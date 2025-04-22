@@ -42,12 +42,9 @@ def build_baseline_model(image_input, text_input, output_path="./compile_and_pro
     conf_file = "./configs/xdecoder/focalt_unicl_lang_lpcvc25.yaml"
     opt = load_opt_from_config_files([conf_file])
 
-    # pretrained_path = "./lpcvc_track2_models/model_state_dict.pt"
-    pretrained_path = "./lpcvc_track2_models/model_state_dict_try.pt"
-    # import pdb
-    # pdb.set_trace()
+    pretrained_path = "./lpcvc_track2_models/model_state_dict_1024.pt"
     ckpt = torch.load(pretrained_path)
-
+    
     # build backbone
     backbone = build_backbone(opt).to(device)
     backbone.load_state_dict({k.replace('backbone.', ''): v for k,v in ckpt.items() if 'backbone' in k}, strict=True)
@@ -146,7 +143,7 @@ class XDecoder(nn.Module):
 
         self.image_resolution = 1024
         self.temperature = lang_encoder.logit_scale
-
+        self.num_queries = 101
         # NOTE: if try to apply normalization to the input image, have to ensure (mean & std) are repeated to the same size, otherwise QNN would output errors.
         self.pixel_mean = torch.tensor(self.opt['INPUT']['PIXEL_MEAN']).view(1, -1, 1, 1).repeat(1, 1, self.image_resolution, self.image_resolution).to(device)
         self.pixel_std = torch.tensor(self.opt['INPUT']['PIXEL_STD']).view(1, -1, 1, 1).repeat(1, 1, self.image_resolution, self.image_resolution).to(device)
@@ -163,7 +160,7 @@ class XDecoder(nn.Module):
             Tuple of processed (images, tokens)
         """
         # downsample image for faster inference
-        down_sample_size = 512
+        down_sample_size = 1024
         images = (image_input - self.pixel_mean) / self.pixel_std
         images = F.interpolate(images, size=down_sample_size, mode='bilinear', align_corners=False, antialias=False)
 
@@ -243,7 +240,11 @@ class XDecoder(nn.Module):
         output = self.mask_decoder(multi_scale_features, mask_features, mask=None, target_queries=None, target_vlp=None, 
                                    task='grounding_eval', extra=extra)
         
-        top1_mask_pred = self.post_processing(output['pred_masks'], output['pred_captions'], text_embeddings['class_emb'][0])
+        pred_gmasks = output['pred_masks'][:, self.num_queries:]
+        pred_gcaptions = output['pred_captions'][:, self.num_queries:]
+        top1_mask_pred = self.post_processing(pred_gmasks, pred_gcaptions, text_embeddings['class_emb'][0])
         return top1_mask_pred
+        # top1_mask_pred = self.post_processing(output['pred_masks'], output['pred_captions'], text_embeddings['class_emb'][0])
+        # return top1_mask_pred
 
 

@@ -43,7 +43,7 @@ MODEL:
   KEYPOINT_ON: false
   LOAD_PROPOSALS: false
   DIM_PROJ: 512
-  BACKBONE_DIM: 768 #1024
+  BACKBONE_DIM: 768
   TEXT:
     ARCH: vlpencoder
     NAME: transformer
@@ -123,7 +123,7 @@ MODEL:
     BBOX_WEIGHT: 5.0
     GIOU_WEIGHT: 2.0
     HIDDEN_DIM: 512
-    NUM_OBJECT_QUERIES: 201
+    NUM_OBJECT_QUERIES: 101
     NHEADS: 8
     DROPOUT: 0.0
     DIM_FEEDFORWARD: 2048
@@ -172,14 +172,14 @@ COCO:
     NAME: coco_eval
     IOU_TYPE: ['bbox', 'segm']
     USE_MULTISCALE: false
-    BATCH_SIZE_TOTAL: 8
+    BATCH_SIZE_TOTAL: 2
     MODEL_FILE: ''
     AUG:
       ENABLED: False
   TRAIN:
     ASPECT_RATIO_GROUPING: true
     BATCH_SIZE_TOTAL: 2
-    BATCH_SIZE_PER_GPU: 1
+    BATCH_SIZE_PER_GPU: 2
     SHUFFLE: true
   DATALOADER:
     FILTER_EMPTY_ANNOTATIONS: False
@@ -201,9 +201,9 @@ VLP:
       ENABLED: True
   TRAIN:
     BATCH_SIZE_TOTAL: 2
-    BATCH_SIZE_PER_GPU: 1
+    BATCH_SIZE_PER_GPU: 2
   TEST:
-    BATCH_SIZE_TOTAL: 256
+    BATCH_SIZE_TOTAL: 2
   DATALOADER:
     FILTER_EMPTY_ANNOTATIONS: False
     NUM_WORKERS: 16
@@ -216,10 +216,14 @@ INPUT:
   PIXEL_STD: [58.395, 57.120, 57.375]
 
 DATASETS:
-  TRAIN: ["coco_2017_train_panoptic_filtall_with_sem_seg_caption_grounding", "vlp_train"]
+  # TRAIN: ["coco_2017_train_panoptic_filtall_with_sem_seg_caption_grounding"]
+  TRAIN: ["coco_2017_train_panoptic_filtall_with_sem_seg_caption_grounding"]
   # open vocabulary segmentation evaluation.
   # TEST: ["ade20k_panoptic_val"]
-  TEST: ["coco_2017_val_panoptic_with_sem_seg", "vlp_captioning_val", "refcocog_val_umd", "vlp_val", "ade20k_panoptic_val"]
+  # TEST: ["refcocog_val_umd"]
+  # TEST: ["vlp_val"]
+  TEST: ["refcocog_val_umd"]
+  # TEST: ["coco_2017_val_panoptic_with_sem_seg", "vlp_captioning_val", "refcocog_val_umd", "vlp_val", "ade20k_panoptic_val"]
   # TEST: ["ade20k_panoptic_val", "ade20k_full_sem_seg_val", "sunrgbd_37_val_seg", "scannet_21_val_seg", "scannet_21_panoptic_val", "scannet_41_val_seg", "cityscapes_fine_panoptic_val", "cityscapes_fine_instance_seg_val", "cityscapes_fine_sem_seg_val", "bdd10k_val_sem_seg", "bdd10k_40_panoptic_val"]
   # Supervised metrics evaluation.
   # TEST: ["vlp_captioning_val", "refcocog_val_umd", "vlp_val"]
@@ -235,7 +239,7 @@ DATALOADER:
 
 # Detectron2 training config for optimizer and lr scheduler
 SOLVER:
-  BASE_LR: 0.0001
+  BASE_LR: 0.00001
   STEPS: [0.88889, 0.96296]
   MAX_ITER: 1
   GAMMA: 0.1
@@ -280,7 +284,7 @@ ADE20K:
   DATASET:
     DATASET: 'ade'
   TEST:
-    BATCH_SIZE_TOTAL: 8
+    BATCH_SIZE_TOTAL: 2
 
 
 REF:
@@ -297,7 +301,7 @@ REF:
     SAMPLER_TRAIN: "TrainingSampler"
     ASPECT_RATIO_GROUPING: False
   TEST:
-    BATCH_SIZE_TOTAL: 8
+    BATCH_SIZE_TOTAL: 1
 
 SUN:
   INPUT:
@@ -312,7 +316,7 @@ SUN:
     SAMPLER_TRAIN: "TrainingSampler"
     ASPECT_RATIO_GROUPING: False
   TEST:
-    BATCH_SIZE_TOTAL: 8
+    BATCH_SIZE_TOTAL: 2
 
 SCAN:
   INPUT:
@@ -327,7 +331,7 @@ SCAN:
     SAMPLER_TRAIN: "TrainingSampler"
     ASPECT_RATIO_GROUPING: False
   TEST:
-    BATCH_SIZE_TOTAL: 8
+    BATCH_SIZE_TOTAL: 2
 
 BDD:
   INPUT:
@@ -342,7 +346,7 @@ BDD:
     SAMPLER_TRAIN: "TrainingSampler"
     ASPECT_RATIO_GROUPING: False
   TEST:
-    BATCH_SIZE_TOTAL: 8
+    BATCH_SIZE_TOTAL: 2
 
 CITY:
   INPUT:
@@ -363,7 +367,7 @@ CITY:
     MASK_FORMAT: "polygon"
   TEST:
     EVAL_PERIOD: 5000
-    BATCH_SIZE_TOTAL: 8
+    BATCH_SIZE_TOTAL: 2
     AUG:
       ENABLED: False
       MIN_SIZES: [512, 768, 1024, 1280, 1536, 1792]

@@ -1,3 +1,8 @@
+#ignore large dataset
+
+/datasets/*
+
+
 # IntelliJ project files
 .idea
 *.iml

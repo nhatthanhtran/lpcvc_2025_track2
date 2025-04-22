@@ -159,7 +159,7 @@ def _test_loader_from_config(cfg, dataset_name, mapper=None):
     if mapper is None:
         mapper_cfg = CfgNode({'INPUT': cfg['INPUT'], 'MODEL': cfg['MODEL'], 'DATASETS': cfg['DATASETS']})
         mapper = DatasetMapper(mapper_cfg, False)
-    assert cfg['TEST']['BATCH_SIZE_TOTAL'] % get_world_size() == 0, "Evaluation total batchsize is not divisible by gpu number"
+    assert cfg['TEST']['BATCH_SIZE_TOTAL'] % get_world_size() == 0, f"Evaluation total batchsize {cfg['TEST']['BATCH_SIZE_TOTAL']} is not divisible by gpu number"
     batch_size = cfg['TEST']['BATCH_SIZE_TOTAL'] // get_world_size()
 
     return {

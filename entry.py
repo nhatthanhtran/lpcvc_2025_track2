@@ -17,7 +17,7 @@ from utils.arguments import load_opt_command
 # debugpy.listen(5678)
 # debugpy.wait_for_client()
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename='./logs/entry.log', filemode='w')
 logger = logging.getLogger(__name__)
 
 def init_wandb(args, job_dir, entity='xueyanz', project='xdecoder', job_name='tmp'):

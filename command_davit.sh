@@ -1,8 +1,8 @@
 mpirun -n 8 python entry.py train \
-            --conf_files configs/xdecoder/focalt_unicl_lang_finetune.yaml \
+            --conf_files configs/xdecoder/davitd3_unicl_lang_finetune.yaml \
             --overrides \
             FP16 True \
-            COCO.INPUT.IMAGE_SIZE 512 \
+            COCO.INPUT.IMAGE_SIZE 256 \
             MODEL.DECODER.HIDDEN_DIM 512 \
             MODEL.ENCODER.CONVS_DIM 512 \
             MODEL.ENCODER.MASK_DIM 512 \
@@ -17,17 +17,17 @@ mpirun -n 8 python entry.py train \
             MODEL.DECODER.GROUNDING.TEXT_WEIGHT 2.0 \
             MODEL.DECODER.GROUNDING.CLASS_WEIGHT 0.5 \
             COCO.TEST.BATCH_SIZE_TOTAL 8 \
-            COCO.TRAIN.BATCH_SIZE_TOTAL 32 \
-            COCO.TRAIN.BATCH_SIZE_PER_GPU 4 \
+            COCO.TRAIN.BATCH_SIZE_TOTAL 256 \
+            COCO.TRAIN.BATCH_SIZE_PER_GPU 32 \
             VLP.TEST.BATCH_SIZE_TOTAL 8 \
-            VLP.TRAIN.BATCH_SIZE_TOTAL 32 \
-            VLP.TRAIN.BATCH_SIZE_PER_GPU 4 \
+            VLP.TRAIN.BATCH_SIZE_TOTAL 256 \
+            VLP.TRAIN.BATCH_SIZE_PER_GPU 32 \
             VLP.DATALOADER.NUM_WORKERS 4 \
             ADE20K.TEST.BATCH_SIZE_TOTAL 8 \
             REF.TEST.BATCH_SIZE_TOTAL 8 \
             SOLVER.LR_MULTIPLIER.lang_encoder 0.1 \
             WEIGHT True \
-            RESUME_FROM ./lpcvc_track2_models/model_state_dict.pt
+            RESUME_FROM ./lpcvc_track2_models/model_state_dict_davit.pt
             # RESUME_FROM /pth/to/xdecoder_data/pretrained/focalt_in21k_yfcc_gcc_xdecoder_unicl.pt
 
 # CUDA_VISIBLE_DEVICES=1 mpirun -n 1 python entry.py evaluate \
