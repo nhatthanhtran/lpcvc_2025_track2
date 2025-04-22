@@ -1,5 +1,18 @@
 # Sample Solution - Track 2: Open-Vocabulary Segmentation with Text-Prompt (LPCVC 2025)
 
+This is modification of the Sample Solution from LPCVC 2025 Track 2 .
+For this solution we finetune the provided model on COCO dataset using image size of 512.
+We found this provide the best solution that fit the runtime criteria of the competition.
+The baseline model is `./lpcvc_track2_models/model_state_dict.pt`, where the 
+`./lpcvc_track2_models/model_state_dict_512.pt` stores the checkpoint for the 512 finetune.
+The `./lpcvc_track2_models/` also contains other checkpoints as well with other resolution,
+in particular 1024. However 1024 is too large and exceed the inference run time requirement.
+
+To submit the model to Qualcomm AI Hub, run the following command
+```bash
+python compile_and_profile_base_line/compile_profile_inference_aihub.py
+```
+
 ## :fire: News
 - [2025.02.13] OpenCV Webinar by Professor Lu introducing LPCVC 2025
 - [2025.02.01] Sample solution of Track2: X-Decoder released
